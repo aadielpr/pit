@@ -1,26 +1,36 @@
 # pit — pi state in the tmux window title
 
 A tiny pi extension + tmux plugin that shows whether the pi coding agent in a
-window is **working** or **idle**, right next to the window title in the tmux
-status bar.
+window is **working**, **complete**, or **idle**, right next to the window
+title in the tmux status bar.
 
-- working → animated braille spinner (`⠋ ⠙ ⠹ …`)
-- idle    → `●`
+- working   → `⠶` (static, no animation)
+- complete  → `●` (task finished on an unfocused window)
+- idle      → `π`
 - no pi in that window → nothing
 
 State is per-window: each tmux window that runs its own pi gets its own marker.
 One pi per window works as you'd expect; if you ever split a window into panes,
 the marker still tracks the window's pi (not whichever pane is active).
 
+Each pi window is also renamed to **"Pi"** (with `automatic-rename` disabled
+for it while pi owns it), so every pi window is labeled "Pi".
+
 ## How it works
 
 The extension (`extensions/pi-tmux-state.ts`) subscribes to pi lifecycle events
-and writes two per-window tmux options (`@pi-state`, `@pi-frame`) onto its own
-window. While working it advances the frame ~5×/s and asks tmux to refresh the
-status line, so the spinner animates without touching your `status-interval`.
+and writes one per-window tmux option (`@pi-state`) onto its own window.
 
-The tmux plugin (`pi-tmux.tmux`) just sets `window-status-format` to render the
-marker before the existing `#W` title, reading those per-window options.
+There is **no timer and no per-frame update** — "working" is a single static
+glyph, so the status line isn't churned every tick. When a task finishes on a
+window that isn't currently focused, the state becomes `complete` (shown as
+`●`); the first time that window is visited again, the tmux plugin's global
+`after-select-window` hook resets it back to `idle` (`π`). That hook also
+fires for `next-window` / `previous-window` / `last-window`, so it covers
+every usual way of switching windows.
+
+The tmux plugin (`pi-tmux.tmux`) sets `window-status-format` to render the
+marker before the existing `#W` title, reading `@pi-state`.
 
 ## Install
 
@@ -44,8 +54,9 @@ run-shell "/Users/gbmnx/gbmnx/dev/pit/pi-tmux.tmux"
 
 Then `prefix r` (or `tmux source-file ~/.config/tmux/tmux.conf`) to load it.
 
-That's it. Run `pi` in a window and submit a prompt — the window title shows a
-spinner; when the agent finishes it turns into `●`.
+That's it. Run `pi` in a window and submit a prompt — the window title shows
+`⠶` while busy, then `π` when idle (or `●` if you weren't looking and switch
+back to it).
 
 ## Notes / caveats
 
@@ -54,5 +65,4 @@ spinner; when the agent finishes it turns into `●`.
 - If pi is killed hard (e.g. `pkill pi`) mid-task, its last state can stick on
   that window. A normal exit (`/exit`) cleans up. Closing the window removes
   the options entirely (they're window-scoped).
-- You can change glyphs by editing the format in `pi-tmux.tmux` and the
-  `FRAMES` array in the extension.
+- You can change glyphs by editing the format in `pi-tmux.tmux`.
