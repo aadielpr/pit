@@ -24,11 +24,13 @@
 #   run-shell "/path/to/pit/pi-tmux.tmux"
 # or drop it under your tpm plugin dir.
 
-# Marker per @pi-state; keep the existing "#W " title after the marker.
-_PI_MARKER='#{?#{==:#{@pi-state},working},⠶,#{?#{==:#{@pi-state},complete},,#{?#{==:#{@pi-state},idle},π,}}}'
+# Marker per @pi-state.  Each branch emits the full window entry
+# (marker + #W) so we can colour the whole thing per-state.
+# complete → green; working/idle → inherit theme colours.
+_PI_MARKER='#{?#{==:#{@pi-state},working},⠶ #W ,#{?#{==:#{@pi-state},complete},#[fg=colour148] #W #[fg=default],#{?#{==:#{@pi-state},idle},π #W ,#W }}}'
 
-tmux set-window-option -g window-status-current-format "${_PI_MARKER} #W "
-tmux set-window-option -g window-status-format         "${_PI_MARKER} #W "
+tmux set-window-option -g window-status-current-format "${_PI_MARKER}"
+tmux set-window-option -g window-status-format         "${_PI_MARKER}"
 
 # When the user switches into a "complete" window, clear it back to "idle".
 # The command is quoted as one tmux token group so if-shell gets a single arg.
