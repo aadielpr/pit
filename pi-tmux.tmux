@@ -7,16 +7,18 @@
 #
 # This script prepends a marker to the window title in the status bar:
 #   working   -> ⠶ (static, no animation)
-#   complete  -> ● (task finished on an unfocused window)
+#   complete  -> ● (task finished; auto-transitions to idle after 1.5 s if watching)
 #   idle      -> π
 #   no pi     -> nothing (title shows just #W as before)
 #
-# "Visited" reset: the global after-select-window hook below resets the
-# just-activated window's @pi-state from "complete" back to "idle" (π) the
-# moment the user switches to it. after-select-window also fires for
-# next-window / previous-window / last-window, so it covers every usual way of
-# switching windows. It only acts when @pi-state is exactly "complete", so an
-# in-flight "working" window is never touched.
+# "Visited" reset: when a task completes on an unfocused window, the global
+# after-select-window hook below resets the just-activated window's @pi-state
+# from "complete" back to "idle" (π) the moment the user switches to it.
+# When the user is already focused on the window, the extension handles the
+# transition itself via a short timeout (1.5 s). after-select-window also
+# fires for next-window / previous-window / last-window, so it covers every
+# usual way of switching windows. It only acts when @pi-state is exactly
+# "complete", so an in-flight "working" window is never touched.
 #
 # The extension also renames each pi window to "Pi", so #W shows "Pi".
 #

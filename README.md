@@ -5,7 +5,7 @@ window is **working**, **complete**, or **idle**, right next to the window
 title in the tmux status bar.
 
 - working   → `⠶` (static, no animation)
-- complete  → `●` (task finished on an unfocused window)
+- complete  → `●` (task finished; auto-transitions to idle after 1.5 s if you're watching)
 - idle      → `π`
 - no pi in that window → nothing
 
@@ -22,12 +22,13 @@ The extension (`extensions/pi-tmux-state.ts`) subscribes to pi lifecycle events
 and writes one per-window tmux option (`@pi-state`) onto its own window.
 
 There is **no timer and no per-frame update** — "working" is a single static
-glyph, so the status line isn't churned every tick. When a task finishes on a
-window that isn't currently focused, the state becomes `complete` (shown as
-`●`); the first time that window is visited again, the tmux plugin's global
-`after-select-window` hook resets it back to `idle` (`π`). That hook also
-fires for `next-window` / `previous-window` / `last-window`, so it covers
-every usual way of switching windows.
+glyph, so the status line isn't churned every tick. When a task finishes, the
+state always becomes `complete` (shown as `●`). If you're focused on that
+window, a short timeout (1.5 s) transitions it to `idle` (`π`). If you're on
+another window, the tmux plugin's global `after-select-window` hook resets it
+back to `idle` the first time you visit it. That hook also fires for
+`next-window` / `previous-window` / `last-window`, so it covers every usual
+way of switching windows.
 
 The tmux plugin (`pi-tmux.tmux`) sets `window-status-format` to render the
 marker before the existing `#W` title, reading `@pi-state`.

@@ -6,14 +6,15 @@
 // The companion tmux plugin (pi-tmux.tmux) reads @pi-state in
 // window-status-format to draw a marker before the window title:
 //   working   -> static braille glyph (no animation)
-//   complete  -> ● (task finished on an unfocused window)
+//   complete  -> ● (task finished, shown briefly even when focused)
 //   idle      -> π
 //
 // No timer, no per-frame updates: "working" is a single static glyph so the
-// status line isn't churned every tick. When a task finishes on a window that
-// isn't currently focused, the state becomes "complete" (shown as ●); the
-// first time that window is visited again, the plugin's after-select-window
-// hook resets it back to "idle" (π).
+// status line isn't churned every tick. When a task finishes, the state
+// always becomes "complete" first (shown as ●). If the user is focused on
+// this window, a short timeout (1.5 s) then transitions to "idle" (π);
+// otherwise the plugin's after-select-window hook handles the reset the
+// first time the window is visited.
 //
 // The window is also renamed to "Pi" (with automatic-rename disabled for it
 // while pi owns it), so every pi window is labeled "Pi".
@@ -34,6 +35,11 @@ function tmux(args: string[]): string {
 export default function (pi: ExtensionAPI) {
   const paneId = process.env.TMUX_PANE;
   if (!paneId) return; // not inside tmux
+
+  // Timeout that auto-transitions "complete" → "idle" when the user is
+  // watching. Cleared on agent_start and session_shutdown so a new task or
+  // exit doesn't get clobbered.
+  let settleTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Pane -> window. Recomputed each call; cheap local IPC, and survives the
   // rare case of the pane being moved to another window.
@@ -104,18 +110,33 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("agent_start", async () => {
+    if (settleTimeout !== null) {
+      clearTimeout(settleTimeout);
+      settleTimeout = null;
+    }
     setState("working");
   });
 
   // Fires when pi will not continue on its own (no retry/compaction/follow-up
-  // left), i.e. it's truly done with the last prompt. If the user is already
-  // looking at this window, go straight to idle (π); otherwise mark it
-  // complete (●) until they visit it.
+  // left), i.e. it's truly done with the last prompt. Always show "complete"
+  // (●) first so the user gets visual feedback. If the user is focused on
+  // this window, auto-transition to "idle" (π) after 1.5 s; otherwise the
+  // tmux plugin's after-select-window hook handles the reset on visit.
   pi.on("agent_settled", async () => {
-    setState(windowActive() ? "idle" : "complete");
+    setState("complete");
+    if (windowActive()) {
+      settleTimeout = setTimeout(() => {
+        settleTimeout = null;
+        setState("idle");
+      }, 1500);
+    }
   });
 
   pi.on("session_shutdown", async () => {
+    if (settleTimeout !== null) {
+      clearTimeout(settleTimeout);
+      settleTimeout = null;
+    }
     clearState();
   });
 }
