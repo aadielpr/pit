@@ -6,7 +6,7 @@
 #   @pi-state  -> "working" | "complete" | "idle"   (unset on windows with no pi)
 #
 # This script prepends a marker to the window title in the status bar:
-#   working   -> ⠶ (static, no animation)
+#   working   ->  (static, no animation)
 #   complete  -> ● (task finished; auto-transitions to idle after 1.5 s if watching)
 #   idle      -> π
 #   no pi     -> nothing (title shows just #W as before)
@@ -29,7 +29,7 @@
 # Marker per @pi-state.  Each branch emits the full window entry
 # (marker + #W) so we can colour the whole thing per-state.
 # complete → green; working/idle → inherit theme colours.
-_PI_MARKER='#{?#{==:#{@pi-state},working},⠶ #W ,#{?#{==:#{@pi-state},complete},#[fg=colour148] #W #[fg=default],#{?#{==:#{@pi-state},idle},π #W ,#W }}}'
+_PI_MARKER='#{?#{==:#{@pi-state},working}, #W ,#{?#{==:#{@pi-state},complete},#[fg=colour148] #W #[fg=default],#{?#{==:#{@pi-state},idle},π #W ,#W }}}'
 
 tmux set-window-option -g window-status-current-format "${_PI_MARKER}"
 tmux set-window-option -g window-status-format         "${_PI_MARKER}"

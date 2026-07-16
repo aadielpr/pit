@@ -53,22 +53,13 @@ export default function (pi: ExtensionAPI) {
     return tmux(["display", "-p", "-t", paneId, "#{window_active}"]).trim() === "1";
   }
 
-  function clients(): string[] {
-    const sess = tmux(["display", "-p", "-t", paneId, "#{session_name}"]).trim();
-    if (!sess) return [];
-    return tmux(["list-clients", "-t", sess, "-F", "#{client_name}"])
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }
-
-  // Set @pi-state on our window and refresh every attached client's status
-  // line so the change shows up immediately (no reliance on status-interval).
+  // Set @pi-state on our window and refresh the status line so the change
+  // shows up immediately (no reliance on status-interval). refresh-client
+  // without -t targets this pane's client — the one actually looking at us.
   function setState(state: "working" | "complete" | "idle") {
     const w = windowId();
     if (!w) return;
-    const args = ["set-option", "-w", "-t", w, "@pi-state", state];
-    for (const c of clients()) args.push(";", "refresh-client", "-S", "-t", c);
+    const args = ["set-option", "-w", "-t", w, "@pi-state", state, ";", "refresh-client", "-S"];
     tmux(args);
   }
 
@@ -80,8 +71,8 @@ export default function (pi: ExtensionAPI) {
     const args = [
       "rename-window", "-t", w, "Pi",
       ";", "set-option", "-w", "-t", w, "automatic-rename", "off",
+      ";", "refresh-client", "-S",
     ];
-    for (const c of clients()) args.push(";", "refresh-client", "-S", "-t", c);
     tmux(args);
   }
 
@@ -93,8 +84,8 @@ export default function (pi: ExtensionAPI) {
     const args = [
       "set-option", "-w", "-u", "-t", w, "@pi-state",
       ";", "set-option", "-w", "-t", w, "automatic-rename", "on",
+      ";", "refresh-client", "-S",
     ];
-    for (const c of clients()) args.push(";", "refresh-client", "-S", "-t", c);
     tmux(args);
   }
 
