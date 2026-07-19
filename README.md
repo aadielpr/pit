@@ -5,7 +5,7 @@ window is **working**, **complete**, or **idle**, right next to the window
 title in the tmux status bar.
 
 - working   → static marker (``; no animation)
-- complete  → `` (green check-circle; task finished; auto-transitions to idle after 1.5 s if you're watching)
+- complete  → `` (check-circle; task finished; auto-transitions to idle after 1.5 s if you're watching)
 - idle      → `π`
 - no pi in that window → nothing
 
@@ -62,7 +62,7 @@ back to it).
 
 - The marker colors follow your existing `window-status-current-style` /
   `window-status-style` for working and idle states (current window amber,
-  others muted). The complete marker (``) is always shown in green
+  others muted). The complete marker (``) is always shown in bold
   regardless of which window is active.
 - If pi is killed hard (e.g. `pkill pi`) mid-task, its last state can stick on
   that window. A normal exit (`/exit`) cleans up. Closing the window removes

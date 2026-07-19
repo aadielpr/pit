@@ -29,7 +29,7 @@
 # Marker per @pi-state.  Each branch emits the full window entry
 # (marker + #W) so we can colour the whole thing per-state.
 # complete → green; working/idle → inherit theme colours.
-_PI_MARKER='#{?#{==:#{@pi-state},working}, #W ,#{?#{==:#{@pi-state},complete},#[fg=colour148] #W #[fg=default],#{?#{==:#{@pi-state},idle},π #W ,#W }}}'
+_PI_MARKER='#{?#{==:#{@pi-state},working}, #W ,#{?#{==:#{@pi-state},complete},#[bold] #W #[nobold],#{?#{==:#{@pi-state},idle},π #W ,#W }}}'
 
 tmux set-window-option -g window-status-current-format "${_PI_MARKER}"
 tmux set-window-option -g window-status-format         "${_PI_MARKER}"
